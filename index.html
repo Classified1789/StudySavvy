@@ -1,0 +1,872 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>StudySavvy - Your Learning Companion</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        /* Basic styling for dark mode */
+        body {
+            background-color: #222222;
+            color: #ffffff;
+            font-family: 'Inter', sans-serif; /* Using Inter font */
+        }
+        /* Gradient styles for cards and elements */
+        .blue-gradient { background: linear-gradient(135deg, #0055A4 0%, #003b72 100%); }
+        .red-gradient { background: linear-gradient(135deg, #DC143C 0%, #a01030 100%); }
+        .green-gradient { background: linear-gradient(135deg, #117C13 0%, #0a5c0c 100%); }
+        .orange-gradient { background: linear-gradient(135deg, #DA7756 0%, #b65a3e 100%); }
+        .purple-gradient { background: linear-gradient(135deg, #8A2BE2 0%, #5a1c96 100%); }
+        .yellow-text { color: #eded3e; }
+
+        /* Hover effect for cards */
+        .card-hover { transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out; }
+        .card-hover:hover { transform: translateY(-5px); box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3), 0 4px 6px -2px rgba(0, 0, 0, 0.25); }
+
+        /* Sidebar styling */
+        .sidebar-item { border-left: 4px solid transparent; transition: background-color 0.2s ease, border-left-color 0.2s ease; }
+        .sidebar-item.active { border-left-color: #0055A4; background-color: #333333; }
+        .sidebar-item:hover:not(.active) { background-color: #3a3a3a; }
+
+        /* Section visibility control */
+        .section { display: none; }
+        .section.active { display: block; animation: fadeIn 0.5s ease-in-out; }
+
+        /* Fade-in animation */
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        /* Calendar styling */
+        .calendar-day { transition: background-color 0.2s ease; }
+        .calendar-day:hover:not(.disabled):not(.today) { background-color: #444; }
+        .calendar-day.today { background-color: #0055A4; color: white; font-weight: bold; }
+        .calendar-day.disabled { color: #555; }
+        .calendar-day .dot { width: 6px; height: 6px; border-radius: 50%; position: absolute; bottom: 4px; left: 50%; transform: translateX(-50%); }
+
+        /* Ensure elements are rounded */
+        * { border-radius: 0.375rem; /* Equivalent to rounded-lg */ }
+        body, html { border-radius: 0; } /* Reset for body/html */
+        .rounded-full { border-radius: 9999px; }
+        .rounded-t-sm { border-top-left-radius: 0.125rem; border-top-right-radius: 0.125rem; }
+
+        /* Responsive Design Considerations */
+        @media (max-width: 768px) {
+            .ml-64 { margin-left: 0; } /* Remove margin for sidebar on small screens */
+            .fixed.h-full.w-64 { display: none; } /* Hide sidebar on small screens (consider a toggle) */
+            .grid-cols-4, .grid-cols-3, .grid-cols-12, .grid-cols-2 { grid-template-columns: repeat(1, minmax(0, 1fr)); } /* Stack grids */
+            .col-span-2, .col-span-3, .col-span-9 { grid-column: span 1 / span 1; } /* Reset column spans */
+            header div:first-child { text-align: center; margin-bottom: 1rem; }
+            header { flex-direction: column; align-items: center; }
+        }
+    </style>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
+</head>
+<body class="antialiased">
+    <div class="fixed h-full w-64 bg-[#333333] shadow-lg z-10">
+        <div class="p-6">
+            <div class="flex items-center space-x-2">
+                <div class="w-8 h-8 blue-gradient rounded-lg flex items-center justify-center">
+                    <i class="fas fa-graduation-cap text-white text-lg"></i>
+                </div>
+                <h1 class="text-2xl font-bold text-[#eded3e]">StudySavvy</h1>
+            </div>
+        </div>
+
+        <nav class="mt-6">
+            <a href="#" class="flex items-center px-6 py-3 sidebar-item active text-white" data-section="dashboard">
+                <i class="fas fa-tachometer-alt w-5 mr-3"></i> Dashboard
+            </a>
+            <a href="#" class="flex items-center px-6 py-3 sidebar-item text-gray-300 hover:text-white" data-section="courses">
+                <i class="fas fa-book-open w-5 mr-3"></i> My Courses
+            </a>
+            <a href="#" class="flex items-center px-6 py-3 sidebar-item text-gray-300 hover:text-white" data-section="planner">
+                <i class="fas fa-calendar-alt w-5 mr-3"></i> Study Planner
+            </a>
+            <a href="#" class="flex items-center px-6 py-3 sidebar-item text-gray-300 hover:text-white" data-section="resources">
+                <i class="fas fa-folder w-5 mr-3"></i> Resources
+            </a>
+            <a href="#" class="flex items-center px-6 py-3 sidebar-item text-gray-300 hover:text-white" data-section="analytics">
+                <i class="fas fa-chart-line w-5 mr-3"></i> Analytics
+            </a>
+        </nav>
+
+        <div class="absolute bottom-0 left-0 w-full p-4 border-t border-gray-700">
+             <a href="#" class="flex items-center px-2 py-2 sidebar-item text-gray-300 hover:text-white" data-section="settings">
+                <i class="fas fa-cog w-5 mr-3"></i> Settings
+            </a>
+        </div>
+    </div>
+
+    <div class="ml-64 p-8">
+        <header class="flex justify-between items-center mb-8 flex-wrap">
+            <div>
+                <h2 class="text-2xl font-bold text-white">Welcome back, Jaevance!</h2>
+                <p class="text-gray-400">Friday, May 2, 2025. Let's continue your learning journey.</p>
+            </div>
+
+            <div class="flex items-center space-x-4">
+                <button class="p-2 rounded-full bg-[#444444] hover:bg-[#555555] relative">
+                    <i class="fas fa-bell text-[#eded3e]"></i>
+                    <span class="absolute top-0 right-0 block h-2 w-2 rounded-full ring-2 ring-[#444444] bg-red-500"></span>
+                </button>
+                <div class="flex items-center space-x-2 cursor-pointer p-1 rounded-lg hover:bg-[#444444]">
+                    <div class="w-10 h-10 blue-gradient rounded-full flex items-center justify-center text-white font-bold">
+                        AJ
+                    </div>
+                    <span class="text-gray-300 hidden sm:inline">Amendanio, Jaevance R.</span>
+                    <i class="fas fa-chevron-down text-gray-400 text-xs ml-1"></i>
+                </div>
+            </div>
+        </header>
+
+        <section id="dashboard" class="section active">
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                <div class="bg-[#333333] p-6 rounded-xl shadow-lg card-hover">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-gray-400">Study Hours (Week)</h3>
+                        <div class="w-8 h-8 blue-gradient rounded-lg flex items-center justify-center"><i class="fas fa-clock text-white"></i></div>
+                    </div>
+                    <p class="text-3xl font-bold text-white">24.5</p>
+                    <p class="text-green-400 text-sm mt-1">+2.5 from last week</p>
+                </div>
+                <div class="bg-[#333333] p-6 rounded-xl shadow-lg card-hover">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-gray-400">Tasks Complete (Week)</h3>
+                        <div class="w-8 h-8 red-gradient rounded-lg flex items-center justify-center"><i class="fas fa-check-circle text-white"></i></div>
+                    </div>
+                    <p class="text-3xl font-bold text-white">18/20</p>
+                    <p class="text-green-400 text-sm mt-1">90% completion rate</p>
+                </div>
+                <div class="bg-[#333333] p-6 rounded-xl shadow-lg card-hover">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-gray-400">Active Courses</h3>
+                        <div class="w-8 h-8 green-gradient rounded-lg flex items-center justify-center"><i class="fas fa-book text-white"></i></div>
+                    </div>
+                    <p class="text-3xl font-bold text-white">5</p>
+                    <p class="text-blue-400 text-sm mt-1">2 assignments due soon</p>
+                </div>
+                <div class="bg-[#333333] p-6 rounded-xl shadow-lg card-hover">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-gray-400">Study Streak</h3>
+                        <div class="w-8 h-8 orange-gradient rounded-lg flex items-center justify-center"><i class="fas fa-fire text-white"></i></div>
+                    </div>
+                    <p class="text-3xl font-bold text-white">7 days</p>
+                    <p class="yellow-text text-sm mt-1">Personal best!</p>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <div class="lg:col-span-2 bg-[#333333] p-6 rounded-xl shadow-lg">
+                    <h3 class="text-xl font-bold mb-4 text-white">Current Focus</h3>
+                    <div class="space-y-4">
+                        <div class="p-4 bg-[#444444] rounded-lg">
+                            <div class="flex items-center justify-between mb-2">
+                                <h4 class="font-semibold text-[#0055A4]">Statistics & Probability</h4>
+                                <span class="text-sm text-[#0055A4]">Chapter 2: Normal Distribution</span>
+                            </div>
+                            <div class="w-full bg-[#555555] rounded-full h-2.5">
+                                <div class="blue-gradient h-2.5 rounded-full" style="width: 75%" title="75% Complete"></div>
+                            </div>
+                        </div>
+                        <div class="p-4 bg-[#444444] rounded-lg">
+                            <div class="flex items-center justify-between mb-2">
+                                <h4 class="font-semibold text-[#DC143C]">Physics 201</h4>
+                                <span class="text-sm text-[#DC143C]">Unit 4: Thermodynamics</span>
+                            </div>
+                            <div class="w-full bg-[#555555] rounded-full h-2.5">
+                                <div class="red-gradient h-2.5 rounded-full" style="width: 60%" title="60% Complete"></div>
+                            </div>
+                        </div>
+                        <div class="p-4 bg-[#444444] rounded-lg">
+                            <div class="flex items-center justify-between mb-2">
+                                <h4 class="font-semibold text-[#117C13]">Biology 102</h4>
+                                <span class="text-sm text-[#117C13]">Section 3: Genetics</span>
+                            </div>
+                            <div class="w-full bg-[#555555] rounded-full h-2.5">
+                                <div class="green-gradient h-2.5 rounded-full" style="width: 45%" title="45% Complete"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-[#333333] p-6 rounded-xl shadow-lg">
+                    <h3 class="text-xl font-bold mb-4 text-white">Upcoming Tasks</h3>
+                    <div class="space-y-4">
+                        <div class="flex items-center p-3 bg-[#444444] rounded-lg">
+                            <div class="w-2 h-2 bg-[#DC143C] rounded-full mr-3 flex-shrink-0"></div>
+                            <div>
+                                <p class="font-medium text-white">Math Assignment</p>
+                                <p class="text-sm text-gray-400">Due Today, 11:59 PM</p>
+                            </div>
+                            <i class="fas fa-exclamation-circle text-red-500 ml-auto"></i>
+                        </div>
+                        <div class="flex items-center p-3 bg-[#444444] rounded-lg">
+                            <div class="w-2 h-2 bg-[#eded3e] rounded-full mr-3 flex-shrink-0"></div>
+                            <div>
+                                <p class="font-medium text-white">Physics Quiz</p>
+                                <p class="text-sm text-gray-400">Tomorrow, 10:00 AM</p>
+                            </div>
+                        </div>
+                        <div class="flex items-center p-3 bg-[#444444] rounded-lg">
+                            <div class="w-2 h-2 bg-[#117C13] rounded-full mr-3 flex-shrink-0"></div>
+                            <div>
+                                <p class="font-medium text-white">Biology Group Study</p>
+                                <p class="text-sm text-gray-400">Sunday, 3:00 PM</p>
+                            </div>
+                        </div>
+                        <div class="flex items-center p-3 bg-[#444444] rounded-lg">
+                            <div class="w-2 h-2 bg-[#DA7756] rounded-full mr-3 flex-shrink-0"></div>
+                            <div>
+                                <p class="font-medium text-white">Literature Essay Outline</p>
+                                <p class="text-sm text-gray-400">Monday, 9:00 AM</p>
+                            </div>
+                        </div>
+                         <button class="w-full mt-4 py-2 px-4 rounded-lg bg-[#0055A4] text-white font-medium hover:bg-[#004a8b] transition duration-200">
+                            View All Tasks
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="courses" class="section">
+            <div id="course-grid">
+                <h2 class="text-2xl font-bold mb-6 text-white">My Courses</h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+                    <div class="bg-[#333333] rounded-xl shadow-lg overflow-hidden card-hover">
+                        <div class="h-32 blue-gradient flex items-center justify-center">
+                            <i class="fas fa-calculator text-5xl text-white opacity-80"></i>
+                        </div>
+                        <div class="p-6">
+                            <h3 class="text-xl font-bold text-white mb-2">Statistics & Probability</h3>
+                            <p class="text-gray-400 mb-4 text-sm">Prof. Johnson • MWF 9:00-10:30 AM</p>
+                            <div class="flex justify-between items-center">
+                                <div>
+                                    <span class="text-xs text-gray-400">Progress</span>
+                                    <div class="w-24 bg-[#555555] rounded-full h-2 mt-1">
+                                        <div class="blue-gradient h-2 rounded-full" style="width: 75%"></div>
+                                    </div>
+                                </div>
+                                <button class="course-continue-btn px-4 py-2 rounded-lg blue-gradient text-white text-sm font-medium hover:opacity-90 transition duration-200" data-course-name="Statistics & Probability" data-course-icon="fa-calculator" data-course-color="blue-gradient">
+                                    Continue
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="bg-[#333333] rounded-xl shadow-lg overflow-hidden card-hover">
+                        <div class="h-32 red-gradient flex items-center justify-center">
+                            <i class="fas fa-atom text-5xl text-white opacity-80"></i>
+                        </div>
+                        <div class="p-6">
+                            <h3 class="text-xl font-bold text-white mb-2">Physics 201</h3>
+                            <p class="text-gray-400 mb-4 text-sm">Dr. Reynolds • TR 1:00-2:30 PM</p>
+                            <div class="flex justify-between items-center">
+                                <div>
+                                    <span class="text-xs text-gray-400">Progress</span>
+                                    <div class="w-24 bg-[#555555] rounded-full h-2 mt-1">
+                                        <div class="red-gradient h-2 rounded-full" style="width: 60%"></div>
+                                    </div>
+                                </div>
+                                <button class="course-continue-btn px-4 py-2 rounded-lg red-gradient text-white text-sm font-medium hover:opacity-90 transition duration-200" data-course-name="Physics 201" data-course-icon="fa-atom" data-course-color="red-gradient">
+                                    Continue
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="bg-[#333333] rounded-xl shadow-lg overflow-hidden card-hover">
+                        <div class="h-32 green-gradient flex items-center justify-center">
+                            <i class="fas fa-dna text-5xl text-white opacity-80"></i>
+                        </div>
+                        <div class="p-6">
+                            <h3 class="text-xl font-bold text-white mb-2">Biology 102</h3>
+                            <p class="text-gray-400 mb-4 text-sm">Prof. Martinez • TR 10:00-11:30 AM</p>
+                            <div class="flex justify-between items-center">
+                                <div>
+                                    <span class="text-xs text-gray-400">Progress</span>
+                                    <div class="w-24 bg-[#555555] rounded-full h-2 mt-1">
+                                        <div class="green-gradient h-2 rounded-full" style="width: 45%"></div>
+                                    </div>
+                                </div>
+                                <button class="course-continue-btn px-4 py-2 rounded-lg green-gradient text-white text-sm font-medium hover:opacity-90 transition duration-200" data-course-name="Biology 102" data-course-icon="fa-dna" data-course-color="green-gradient">
+                                    Continue
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="bg-[#333333] rounded-xl shadow-lg overflow-hidden card-hover">
+                        <div class="h-32 orange-gradient flex items-center justify-center">
+                            <i class="fas fa-book-reader text-5xl text-white opacity-80"></i>
+                        </div>
+                        <div class="p-6">
+                            <h3 class="text-xl font-bold text-white mb-2">21st Century Literature</h3>
+                            <p class="text-gray-400 mb-4 text-sm">Dr. Williams • MWF 2:00-3:30 PM</p>
+                            <div class="flex justify-between items-center">
+                                <div>
+                                    <span class="text-xs text-gray-400">Progress</span>
+                                    <div class="w-24 bg-[#555555] rounded-full h-2 mt-1">
+                                        <div class="orange-gradient h-2 rounded-full" style="width: 30%"></div>
+                                    </div>
+                                </div>
+                                <button class="course-continue-btn px-4 py-2 rounded-lg orange-gradient text-white text-sm font-medium hover:opacity-90 transition duration-200" data-course-name="21st Century Literature" data-course-icon="fa-book-reader" data-course-color="orange-gradient">
+                                    Continue
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="bg-[#333333] rounded-xl shadow-lg overflow-hidden card-hover">
+                        <div class="h-32 purple-gradient flex items-center justify-center">
+                            <i class="fas fa-laptop-code text-5xl text-white opacity-80"></i>
+                        </div>
+                        <div class="p-6">
+                            <h3 class="text-xl font-bold text-white mb-2">Computer Science</h3>
+                            <p class="text-gray-400 mb-4 text-sm">Prof. Chen • TR 3:00-4:30 PM</p>
+                            <div class="flex justify-between items-center">
+                                <div>
+                                    <span class="text-xs text-gray-400">Progress</span>
+                                    <div class="w-24 bg-[#555555] rounded-full h-2 mt-1">
+                                        <div class="purple-gradient h-2 rounded-full" style="width: 85%"></div>
+                                    </div>
+                                </div>
+                                <button class="course-continue-btn px-4 py-2 rounded-lg purple-gradient text-white text-sm font-medium hover:opacity-90 transition duration-200" data-course-name="Computer Science" data-course-icon="fa-laptop-code" data-course-color="purple-gradient">
+                                    Continue
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="bg-[#333333] rounded-xl shadow-lg overflow-hidden flex items-center justify-center h-full min-h-[200px] border-2 border-dashed border-gray-600 card-hover cursor-pointer hover:border-gray-500 hover:bg-[#3a3a3a]">
+                        <div class="text-center">
+                            <div class="w-12 h-12 bg-[#444444] mx-auto rounded-full flex items-center justify-center mb-2 text-gray-400 group-hover:text-white">
+                                <i class="fas fa-plus"></i>
+                            </div>
+                            <p class="text-gray-400 group-hover:text-white">Add New Course</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="course-detail" class="hidden">
+                 <button id="back-to-courses" class="mb-6 px-4 py-2 rounded-lg bg-gray-500 text-white text-sm font-medium hover:bg-gray-600 transition duration-200">
+                    <i class="fas fa-arrow-left mr-2"></i>Back to Courses
+                </button>
+                <div class="bg-[#333333] rounded-xl shadow-lg p-8">
+                    <div class="flex items-center mb-6">
+                        <div id="course-detail-icon-container" class="w-16 h-16 rounded-lg flex items-center justify-center mr-4">
+                            <i id="course-detail-icon" class="fas text-3xl text-white opacity-90"></i>
+                        </div>
+                        <h2 id="course-detail-title" class="text-3xl font-bold text-white">Course Name</h2>
+                    </div>
+                    <p class="text-gray-400 mb-6">Welcome to the course page. Here you would find specific materials, assignments, and announcements for this course.</p>
+                    <div class="bg-[#444444] p-6 rounded-lg min-h-[300px]">
+                        <h4 class="text-lg font-semibold text-white mb-4">Course Content</h4>
+                        <p class="text-gray-300">Placeholder for course-specific content like syllabus, modules, assignments, grades, etc. This would be dynamically loaded based on the selected course.</p>
+                        <ul class="list-disc list-inside text-blue-400 mt-4 space-y-2">
+                            <li><a href="#" class="hover:underline">Syllabus</a></li>
+                            <li><a href="#" class="hover:underline">Module 1: Introduction</a></li>
+                            <li><a href="#" class="hover:underline">Assignment 3</a></li>
+                            <li><a href="#" class="hover:underline">Announcements</a></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="planner" class="section">
+            <h2 class="text-2xl font-bold mb-6 text-white">Study Planner</h2>
+
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <div class="lg:col-span-2 bg-[#333333] p-6 rounded-xl shadow-lg">
+                    <div class="flex justify-between items-center mb-6">
+                        <h3 class="text-xl font-bold text-white">May 2025</h3>
+                        <div class="flex space-x-2">
+                            <button class="p-2 rounded-lg bg-[#444444] hover:bg-[#555555] text-gray-300">
+                                <i class="fas fa-chevron-left"></i>
+                            </button>
+                            <button class="p-2 rounded-lg bg-[#444444] hover:bg-[#555555] text-gray-300">
+                                <i class="fas fa-chevron-right"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-7 gap-1 text-center">
+                        <div class="text-xs font-medium text-gray-400 py-2 uppercase">Sun</div>
+                        <div class="text-xs font-medium text-gray-400 py-2 uppercase">Mon</div>
+                        <div class="text-xs font-medium text-gray-400 py-2 uppercase">Tue</div>
+                        <div class="text-xs font-medium text-gray-400 py-2 uppercase">Wed</div>
+                        <div class="text-xs font-medium text-gray-400 py-2 uppercase">Thu</div>
+                        <div class="text-xs font-medium text-gray-400 py-2 uppercase">Fri</div>
+                        <div class="text-xs font-medium text-gray-400 py-2 uppercase">Sat</div>
+
+                        <div class="py-3 calendar-day disabled">27</div>
+                        <div class="py-3 calendar-day disabled">28</div>
+                        <div class="py-3 calendar-day disabled">29</div>
+                        <div class="py-3 calendar-day disabled">30</div>
+                        <div class="py-3 calendar-day relative">1<div class="dot bg-red-500"></div></div>
+                        <div class="py-3 calendar-day today relative">2<div class="dot bg-green-500"></div><div class="dot bg-blue-500 ml-2"></div></div>
+                        <div class="py-3 calendar-day relative">3<div class="dot bg-purple-500"></div></div>
+
+                        <div class="py-3 calendar-day relative">4<div class="dot bg-green-500"></div></div>
+                        <div class="py-3 calendar-day relative">5<div class="dot bg-blue-500"></div></div>
+                        <div class="py-3 calendar-day">6</div>
+                        <div class="py-3 calendar-day">7</div>
+                        <div class="py-3 calendar-day relative">8<div class="dot bg-red-500"></div></div>
+                        <div class="py-3 calendar-day">9</div>
+                        <div class="py-3 calendar-day">10</div>
+
+                        <div class="py-3 calendar-day relative">11<div class="dot bg-green-500"></div></div>
+                        <div class="py-3 calendar-day relative">12<div class="dot bg-blue-500"></div></div>
+                        <div class="py-3 calendar-day">13</div>
+                        <div class="py-3 calendar-day">14</div>
+                        <div class="py-3 calendar-day relative">15<div class="dot bg-red-500"></div></div>
+                        <div class="py-3 calendar-day">16</div>
+                        <div class="py-3 calendar-day">17</div>
+
+                        <div class="py-3 calendar-day relative">18<div class="dot bg-green-500"></div></div>
+                        <div class="py-3 calendar-day relative">19<div class="dot bg-blue-500"></div></div>
+                        <div class="py-3 calendar-day">20</div>
+                        <div class="py-3 calendar-day">21</div>
+                        <div class="py-3 calendar-day relative">22<div class="dot bg-red-500"></div></div>
+                        <div class="py-3 calendar-day">23</div>
+                        <div class="py-3 calendar-day">24</div>
+
+                        <div class="py-3 calendar-day relative">25<div class="dot bg-green-500"></div></div>
+                        <div class="py-3 calendar-day relative">26<div class="dot bg-blue-500"></div></div>
+                        <div class="py-3 calendar-day">27</div>
+                        <div class="py-3 calendar-day">28</div>
+                        <div class="py-3 calendar-day relative">29<div class="dot bg-red-500"></div></div>
+                        <div class="py-3 calendar-day">30</div>
+                        <div class="py-3 calendar-day">31</div>
+                    </div>
+                </div>
+
+                <div class="bg-[#333333] p-6 rounded-xl shadow-lg">
+                    <h3 class="text-xl font-bold mb-4 text-white">Today's Schedule (May 2)</h3>
+                    <div class="space-y-4">
+                         <div class="flex items-start p-3 bg-[#444444] rounded-lg">
+                            <div class="w-1.5 h-full bg-blue-500 rounded-full mr-3 mt-1 flex-shrink-0 self-stretch"></div>
+                            <div class="w-full">
+                                <div class="flex justify-between items-center">
+                                    <p class="font-medium text-white">Statistics & Probability</p>
+                                    <p class="text-xs text-gray-400">9:00 AM - 10:30 AM</p>
+                                </div>
+                                <p class="text-sm text-gray-400">Chapter 7 Practice Problems</p>
+                            </div>
+                        </div>
+                         <div class="flex items-start p-3 bg-[#444444] rounded-lg">
+                            <div class="w-1.5 h-full bg-green-500 rounded-full mr-3 mt-1 flex-shrink-0 self-stretch"></div>
+                            <div class="w-full">
+                                <div class="flex justify-between items-center">
+                                    <p class="font-medium text-white">Biology</p>
+                                    <p class="text-xs text-gray-400">10:30 AM - 11:30 AM</p>
+                                </div>
+                                <p class="text-sm text-gray-400">Review Lecture Notes</p>
+                            </div>
+                        </div>
+                         <div class="flex items-start p-3 bg-[#444444] rounded-lg">
+                            <div class="w-1.5 h-full bg-red-500 rounded-full mr-3 mt-1 flex-shrink-0 self-stretch"></div>
+                            <div class="w-full">
+                                <div class="flex justify-between items-center">
+                                    <p class="font-medium text-white">Physics</p>
+                                    <p class="text-xs text-gray-400">1:00 PM - 2:30 PM</p>
+                                </div>
+                                <p class="text-sm text-gray-400">Lab Report Work</p>
+                            </div>
+                        </div>
+                        <div class="flex items-start p-3 bg-[#444444] rounded-lg">
+                            <div class="w-1.5 h-full bg-purple-500 rounded-full mr-3 mt-1 flex-shrink-0 self-stretch"></div>
+                            <div class="w-full">
+                                <div class="flex justify-between items-center">
+                                    <p class="font-medium text-white">Computer Science</p>
+                                    <p class="text-xs text-gray-400">3:00 PM - 4:30 PM</p>
+                                </div>
+                                <p class="text-sm text-gray-400">Coding Assignment</p>
+                            </div>
+                        </div>
+
+                        <button class="w-full py-3 mt-4 rounded-lg blue-gradient text-white font-medium hover:opacity-90 transition duration-200">
+                            <i class="fas fa-plus mr-2"></i>Add Study Block
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="resources" class="section">
+            <h2 class="text-2xl font-bold mb-6 text-white">Resources</h2>
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                <div class="lg:col-span-3">
+                    <div class="bg-[#333333] p-4 rounded-xl shadow-lg mb-6 sticky top-8">
+                        <h3 class="text-lg font-bold text-white mb-3">Categories</h3>
+                        <div class="space-y-2">
+                            <button class="w-full text-left p-2 rounded bg-[#0055A4] text-white font-medium flex items-center resource-category-btn active">
+                                <i class="fas fa-users w-5 mr-2"></i>Peer Tutoring
+                            </button>
+                            <button class="w-full text-left p-2 rounded hover:bg-[#444444] text-gray-300 flex items-center resource-category-btn">
+                                <i class="fas fa-book w-5 mr-2"></i>Study Guides
+                            </button>
+                            <button class="w-full text-left p-2 rounded hover:bg-[#444444] text-gray-300 flex items-center resource-category-btn">
+                                <i class="fas fa-file-pdf w-5 mr-2"></i>Course Materials
+                            </button>
+                            <button class="w-full text-left p-2 rounded hover:bg-[#444444] text-gray-300 flex items-center resource-category-btn">
+                                <i class="fas fa-video w-5 mr-2"></i>Video Tutorials
+                            </button>
+                            <button class="w-full text-left p-2 rounded hover:bg-[#444444] text-gray-300 flex items-center resource-category-btn">
+                                <i class="fas fa-clipboard-list w-5 mr-2"></i>Practice Tests
+                            </button>
+                            <button class="w-full text-left p-2 rounded hover:bg-[#444444] text-gray-300 flex items-center resource-category-btn">
+                                <i class="fas fa-link w-5 mr-2"></i>External Resources
+                            </button>
+                        </div>
+                    </div>
+                    <div class="bg-[#333333] p-4 rounded-xl shadow-lg sticky top-60">
+                        <h3 class="text-lg font-bold text-white mb-3">Filters</h3>
+                         <div class="mb-4">
+                            <label class="block text-gray-400 text-sm mb-1 font-medium">Subject</label>
+                            <select class="w-full bg-[#444444] text-white rounded p-2 border border-[#555555] focus:outline-none focus:border-blue-500">
+                                <option>All Subjects</option>
+                                <option>Statistics & Probability</option>
+                                <option>Physics</option>
+                                <option>Biology</option>
+                                <option>21st Century Literature</option>
+                                <option>Computer Science</option>
+                            </select>
+                        </div>
+                         <button class="w-full py-2 mt-2 rounded-lg bg-[#555555] text-white font-medium hover:bg-[#666666] transition duration-200">
+                            Apply Filters
+                        </button>
+                    </div>
+                </div>
+
+                <div class="lg:col-span-9">
+                    <div class="bg-[#333333] p-6 rounded-xl shadow-lg mb-6">
+                        <div class="flex justify-between items-center mb-4">
+                            <h3 class="text-xl font-bold text-white">Available Peer Tutors</h3>
+                            <button class="px-4 py-2 rounded-lg blue-gradient text-white text-sm font-medium hover:opacity-90 transition duration-200">
+                                Become a Tutor
+                            </button>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
+                            <div class="bg-[#444444] p-4 rounded-lg flex items-start space-x-3 card-hover">
+                                <div class="w-12 h-12 red-gradient rounded-full flex items-center justify-center text-white font-bold flex-shrink-0 text-lg">CP</div>
+                                <div>
+                                    <h4 class="font-medium text-white">Clouie Carpio</h4>
+                                    <p class="text-sm text-gray-400">Statistics & Probability, Physics</p>
+                                    <div class="flex text-xs text-[#eded3e] mt-1 items-center">
+                                        <i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star-half-alt"></i>
+                                        <span class="text-gray-400 ml-1">(4.5)</span>
+                                    </div>
+                                    <button class="mt-2 px-3 py-1 rounded text-xs red-gradient text-white hover:opacity-90 transition duration-200">Schedule</button>
+                                </div>
+                            </div>
+                            <div class="bg-[#444444] p-4 rounded-lg flex items-start space-x-3 card-hover">
+                                <div class="w-12 h-12 green-gradient rounded-full flex items-center justify-center text-white font-bold flex-shrink-0 text-lg">CE</div>
+                                <div>
+                                    <h4 class="font-medium text-white">Clariza Elizan</h4>
+                                    <p class="text-sm text-gray-400">Biology, Chemistry</p>
+                                     <div class="flex text-xs text-[#eded3e] mt-1 items-center">
+                                        <i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i>
+                                        <span class="text-gray-400 ml-1">(5.0)</span>
+                                    </div>
+                                    <button class="mt-2 px-3 py-1 rounded text-xs green-gradient text-white hover:opacity-90 transition duration-200">Schedule</button>
+                                </div>
+                            </div>
+                             <div class="bg-[#444444] p-4 rounded-lg flex items-start space-x-3 card-hover">
+                                <div class="w-12 h-12 blue-gradient rounded-full flex items-center justify-center text-white font-bold flex-shrink-0 text-lg">ZS</div>
+                                <div>
+                                    <h4 class="font-medium text-white">Zachariah Salceda</h4>
+                                    <p class="text-sm text-gray-400">Computer Science</p>
+                                     <div class="flex text-xs text-[#eded3e] mt-1 items-center">
+                                        <i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="far fa-star text-gray-500"></i>
+                                        <span class="text-gray-400 ml-1">(4.0)</span>
+                                    </div>
+                                    <button class="mt-2 px-3 py-1 rounded text-xs blue-gradient text-white hover:opacity-90 transition duration-200">Schedule</button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="text-center">
+                            <button class="text-[#0055A4] hover:underline text-sm font-medium">
+                                View All Tutors <i class="fas fa-chevron-right ml-1 text-xs"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="bg-[#333333] p-6 rounded-xl shadow-lg mb-6">
+                         <div class="flex justify-between items-center mb-4">
+                            <h3 class="text-xl font-bold text-white">Recommended Materials</h3>
+                             <div class="flex space-x-1">
+                                <button class="p-2 rounded-lg bg-[#444444] hover:bg-[#555555] text-gray-300"><i class="fas fa-th-large"></i></button>
+                                <button class="p-2 rounded-lg bg-[#555555] text-white"><i class="fas fa-list"></i></button>
+                            </div>
+                        </div>
+                        <div class="space-y-4">
+                             <div class="bg-[#444444] p-4 rounded-lg flex items-center space-x-4 card-hover">
+                                <div class="w-12 h-12 bg-[#555555] rounded flex items-center justify-center flex-shrink-0">
+                                    <i class="fas fa-file-pdf text-[#DC143C] text-2xl"></i>
+                                </div>
+                                <div class="flex-grow">
+                                    <div class="flex justify-between items-center">
+                                        <h4 class="font-medium text-white">Calculus Formulas Cheatsheet</h4>
+                                        <span class="text-xs bg-red-900 text-red-300 px-2 py-0.5 rounded">PDF</span>
+                                    </div>
+                                    <p class="text-sm text-gray-400 mt-1">Complete guide to calculus formulas.</p>
+                                </div>
+                                <button class="p-2 rounded-full bg-[#555555] hover:bg-[#666666] text-gray-300"><i class="fas fa-download"></i></button>
+                                <button class="p-2 rounded-full bg-[#555555] hover:bg-[#666666] text-gray-300"><i class="fas fa-bookmark"></i></button>
+                            </div>
+                            <div class="bg-[#444444] p-4 rounded-lg flex items-center space-x-4 card-hover">
+                                <div class="w-12 h-12 bg-[#555555] rounded flex items-center justify-center flex-shrink-0">
+                                    <i class="fas fa-video text-[#117C13] text-2xl"></i>
+                                </div>
+                                <div class="flex-grow">
+                                     <div class="flex justify-between items-center">
+                                        <h4 class="font-medium text-white">Physics - Motion Explained</h4>
+                                        <span class="text-xs bg-green-900 text-green-300 px-2 py-0.5 rounded">VIDEO</span>
+                                    </div>
+                                    <p class="text-sm text-gray-400 mt-1">Clear explanation of Newton's laws.</p>
+                                </div>
+                                <button class="p-2 rounded-full bg-[#555555] hover:bg-[#666666] text-gray-300"><i class="fas fa-play"></i></button>
+                                <button class="p-2 rounded-full bg-[#555555] hover:bg-[#666666] text-gray-300"><i class="fas fa-bookmark"></i></button>
+                            </div>
+                        </div>
+                         <div class="text-center mt-4">
+                            <button class="text-[#0055A4] hover:underline text-sm font-medium">
+                                View All Materials <i class="fas fa-chevron-right ml-1 text-xs"></i>
+                            </button>
+                        </div>
+                    </div>
+                    </div>
+            </div>
+        </section>
+
+        <section id="analytics" class="section">
+            <h2 class="text-2xl font-bold mb-6 text-white">Analytics</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                <div class="bg-[#333333] p-6 rounded-xl shadow-lg card-hover">
+                    <h3 class="text-gray-400 mb-2">Total Study Time</h3>
+                    <p class="text-3xl font-bold text-white">147.5 hrs</p>
+                    <p class="text-green-400 text-sm mt-1">+12.5 hrs last month</p>
+                </div>
+                <div class="bg-[#333333] p-6 rounded-xl shadow-lg card-hover">
+                    <h3 class="text-gray-400 mb-2">Avg. Assignment Score</h3>
+                    <p class="text-3xl font-bold text-white">92%</p>
+                    <p class="text-green-400 text-sm mt-1">+5% last semester</p>
+                </div>
+                <div class="bg-[#333333] p-6 rounded-xl shadow-lg card-hover">
+                    <h3 class="text-gray-400 mb-2">Courses Active</h3>
+                    <p class="text-3xl font-bold text-white">5/7</p>
+                    <p class="text-blue-400 text-sm mt-1">2 completed</p>
+                </div>
+                <div class="bg-[#333333] p-6 rounded-xl shadow-lg card-hover">
+                    <h3 class="text-gray-400 mb-2">Productivity Score</h3>
+                    <p class="text-3xl font-bold text-white">87/100</p>
+                    <p class="yellow-text text-sm mt-1">Top 15%</p>
+                </div>
+            </div>
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+                <div class="lg:col-span-2 bg-[#333333] p-6 rounded-xl shadow-lg">
+                    <div class="flex justify-between items-center mb-6">
+                        <h3 class="text-xl font-bold text-white">Study Time Analysis (This Week)</h3>
+                        <div class="flex space-x-1">
+                            <button class="px-3 py-1 rounded bg-[#0055A4] text-white text-xs font-medium analytics-period-btn active" data-period="week">Week</button>
+                            <button class="px-3 py-1 rounded bg-[#444444] hover:bg-[#555555] text-gray-300 text-xs font-medium analytics-period-btn" data-period="month">Month</button>
+                            <button class="px-3 py-1 rounded bg-[#444444] hover:bg-[#555555] text-gray-300 text-xs font-medium analytics-period-btn" data-period="semester">Semester</button>
+                        </div>
+                    </div>
+                    <div class="h-64 flex items-end justify-between space-x-2" id="study-chart-bars">
+                        <div class="flex flex-col items-center w-full group relative">
+                            <div class="absolute bottom-full mb-1 w-max px-2 py-1 bg-black text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none">3.0 hrs</div>
+                            <div class="blue-gradient w-full rounded-t-sm" style="height: 35%"></div><p class="text-xs text-gray-400 mt-2">Mon</p>
+                        </div>
+                         <div class="flex flex-col items-center w-full group relative">
+                             <div class="absolute bottom-full mb-1 w-max px-2 py-1 bg-black text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none">5.5 hrs</div>
+                            <div class="blue-gradient w-full rounded-t-sm" style="height: 65%"></div><p class="text-xs text-gray-400 mt-2">Tue</p>
+                        </div>
+                         <div class="flex flex-col items-center w-full group relative">
+                             <div class="absolute bottom-full mb-1 w-max px-2 py-1 bg-black text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none">4.0 hrs</div>
+                            <div class="blue-gradient w-full rounded-t-sm" style="height: 45%"></div><p class="text-xs text-gray-400 mt-2">Wed</p>
+                        </div>
+                         <div class="flex flex-col items-center w-full group relative">
+                             <div class="absolute bottom-full mb-1 w-max px-2 py-1 bg-black text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none">6.5 hrs</div>
+                            <div class="blue-gradient w-full rounded-t-sm" style="height: 80%"></div><p class="text-xs text-gray-400 mt-2">Thu</p>
+                        </div>
+                         <div class="flex flex-col items-center w-full group relative">
+                             <div class="absolute bottom-full mb-1 w-max px-2 py-1 bg-black text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none">4.5 hrs</div>
+                            <div class="blue-gradient w-full rounded-t-sm" style="height: 50%"></div><p class="text-xs text-gray-400 mt-2">Fri</p>
+                        </div>
+                         <div class="flex flex-col items-center w-full group relative">
+                             <div class="absolute bottom-full mb-1 w-max px-2 py-1 bg-black text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none">1.0 hrs</div>
+                            <div class="blue-gradient w-full rounded-t-sm" style="height: 10%"></div><p class="text-xs text-gray-400 mt-2">Sat</p>
+                        </div>
+                         <div class="flex flex-col items-center w-full group relative">
+                             <div class="absolute bottom-full mb-1 w-max px-2 py-1 bg-black text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none">0.0 hrs</div>
+                            <div class="blue-gradient w-full rounded-t-sm" style="height: 1%"></div><p class="text-xs text-gray-400 mt-2">Sun</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-[#333333] p-6 rounded-xl shadow-lg">
+                    <h3 class="text-xl font-bold text-white mb-4">Time Distribution (Week)</h3>
+                    <div class="space-y-4">
+                        <div>
+                            <div class="flex justify-between text-sm mb-1"><span class="text-[#0055A4]">Statistics & Probability</span><span class="text-gray-400">35%</span></div>
+                            <div class="w-full bg-[#444444] rounded-full h-2.5"><div class="blue-gradient h-2.5 rounded-full" style="width: 35%"></div></div>
+                        </div>
+                         <div>
+                            <div class="flex justify-between text-sm mb-1"><span class="text-[#DC143C]">Physics</span><span class="text-gray-400">24%</span></div>
+                            <div class="w-full bg-[#444444] rounded-full h-2.5"><div class="red-gradient h-2.5 rounded-full" style="width: 24%"></div></div>
+                        </div>
+                         <div>
+                            <div class="flex justify-between text-sm mb-1"><span class="text-[#117C13]">Biology</span><span class="text-gray-400">18%</span></div>
+                            <div class="w-full bg-[#444444] rounded-full h-2.5"><div class="green-gradient h-2.5 rounded-full" style="width: 18%"></div></div>
+                        </div>
+                         <div>
+                            <div class="flex justify-between text-sm mb-1"><span class="text-[#DA7756]">English</span><span class="text-gray-400">12%</span></div>
+                            <div class="w-full bg-[#444444] rounded-full h-2.5"><div class="orange-gradient h-2.5 rounded-full" style="width: 12%"></div></div>
+                        </div>
+                         <div>
+                            <div class="flex justify-between text-sm mb-1"><span class="text-[#8A2BE2]">Computer Science</span><span class="text-gray-400">10%</span></div>
+                            <div class="w-full bg-[#444444] rounded-full h-2.5"><div class="purple-gradient h-2.5 rounded-full" style="width: 10%"></div></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+             <div class="mt-8 flex justify-center">
+                <button class="px-6 py-3 rounded-lg blue-gradient text-white font-medium hover:opacity-90 transition duration-200">
+                    <i class="fas fa-download mr-2"></i>Generate Progress Report
+                </button>
+            </div>
+        </section>
+
+        <section id="settings" class="section">
+             <h2 class="text-2xl font-bold mb-6 text-white">Settings</h2>
+             <div class="bg-[#333333] p-8 rounded-xl shadow-lg">
+                 <p class="text-gray-400">Settings page placeholder. User profile, notification preferences, theme options, etc., would go here.</p>
+             </div>
+        </section>
+
+    </div> <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const sidebarItems = document.querySelectorAll('.sidebar-item');
+            const sections = document.querySelectorAll('.section');
+            const courseGrid = document.getElementById('course-grid');
+            const courseDetail = document.getElementById('course-detail');
+            const courseContinueBtns = document.querySelectorAll('.course-continue-btn');
+            const backToCoursesBtn = document.getElementById('back-to-courses');
+            const resourceCategoryBtns = document.querySelectorAll('.resource-category-btn');
+            const analyticsPeriodBtns = document.querySelectorAll('.analytics-period-btn');
+
+            // --- Navigation ---
+            function setActiveSection(targetSectionId) {
+                // Update Sidebar
+                sidebarItems.forEach(sidebarItem => {
+                    sidebarItem.classList.toggle('active', sidebarItem.getAttribute('data-section') === targetSectionId);
+                });
+                // Update Sections
+                sections.forEach(section => {
+                    section.classList.toggle('active', section.id === targetSectionId);
+                });
+
+                // Special handling for courses view
+                if (targetSectionId === 'courses') {
+                    showCourseGrid(); // Default to grid view when navigating to courses
+                }
+            }
+
+            sidebarItems.forEach(item => {
+                item.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const targetSection = this.getAttribute('data-section');
+                    setActiveSection(targetSection);
+                });
+            });
+
+            // --- Course Navigation ---
+            function showCourseGrid() {
+                if (courseGrid) courseGrid.style.display = 'block';
+                if (courseDetail) courseDetail.style.display = 'none';
+            }
+
+            function showCourseDetail(courseData) {
+                if (courseGrid) courseGrid.style.display = 'none';
+                if (courseDetail) {
+                    courseDetail.style.display = 'block';
+                    // Populate detail view
+                    const titleEl = courseDetail.querySelector('#course-detail-title');
+                    const iconEl = courseDetail.querySelector('#course-detail-icon');
+                    const iconContainerEl = courseDetail.querySelector('#course-detail-icon-container');
+
+                    if (titleEl) titleEl.textContent = courseData.name;
+                    if (iconEl) {
+                        iconEl.className = `fas ${courseData.icon} text-3xl text-white opacity-90`; // Reset and set classes
+                    }
+                     if (iconContainerEl) {
+                         // Remove existing gradient classes before adding new one
+                         iconContainerEl.classList.remove('blue-gradient', 'red-gradient', 'green-gradient', 'orange-gradient', 'purple-gradient');
+                         iconContainerEl.classList.add(courseData.color);
+                     }
+                    // Add more population logic here if needed (e.g., load content)
+                }
+            }
+
+            courseContinueBtns.forEach(button => {
+                button.addEventListener('click', function() {
+                    const courseData = {
+                        name: this.dataset.courseName,
+                        icon: this.dataset.courseIcon,
+                        color: this.dataset.courseColor
+                    };
+                    showCourseDetail(courseData);
+                });
+            });
+
+            if (backToCoursesBtn) {
+                backToCoursesBtn.addEventListener('click', showCourseGrid);
+            }
+
+            // --- Resource Categories ---
+            resourceCategoryBtns.forEach(button => {
+                button.addEventListener('click', function() {
+                    resourceCategoryBtns.forEach(btn => {
+                        btn.classList.remove('bg-[#0055A4]', 'text-white', 'active');
+                        btn.classList.add('hover:bg-[#444444]', 'text-gray-300');
+                    });
+                    this.classList.add('bg-[#0055A4]', 'text-white', 'active');
+                    this.classList.remove('hover:bg-[#444444]', 'text-gray-300');
+                    // Add filtering logic here based on the clicked category
+                    console.log("Filter resources by:", this.textContent.trim());
+                });
+            });
+
+            // --- Analytics Period ---
+             analyticsPeriodBtns.forEach(button => {
+                button.addEventListener('click', function() {
+                    analyticsPeriodBtns.forEach(btn => {
+                        btn.classList.remove('bg-[#0055A4]', 'text-white', 'active');
+                        btn.classList.add('bg-[#444444]', 'hover:bg-[#555555]', 'text-gray-300');
+                    });
+                    this.classList.add('bg-[#0055A4]', 'text-white', 'active');
+                    this.classList.remove('bg-[#444444]', 'hover:bg-[#555555]', 'text-gray-300');
+                    const period = this.dataset.period;
+                    // Add logic to update analytics charts/data based on the selected period (week, month, semester)
+                    console.log("Update analytics for period:", period);
+                    // Example: Update chart title
+                    const chartTitle = document.querySelector('#analytics .lg\\:col-span-2 h3');
+                    if (chartTitle) {
+                       chartTitle.textContent = `Study Time Analysis (${period.charAt(0).toUpperCase() + period.slice(1)})`;
+                    }
+                    // In a real app, fetch and redraw chart data here
+                });
+            });
+
+            // --- Initial Setup ---
+            // Ensure the default section is visible on load
+            setActiveSection('dashboard');
+
+        });
+    </script>
+</body>
+</html>
